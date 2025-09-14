@@ -28,6 +28,9 @@ func main() {
 	}
 	defer db.Close()
 
+	db.SetMaxOpenConns(10)
+	db.SetMaxIdleConns(5)
+
 	err = db.Ping()
 	if err != nil {
 		log.Fatal(err)
