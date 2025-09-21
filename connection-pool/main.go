@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"sync"
 
 	_ "github.com/lib/pq"
 )
@@ -37,5 +38,24 @@ func main() {
 	}
 
 	fmt.Println("Connected to database")
+	fmt.Println("Max open connections:", db.Stats().OpenConnections)
+	fmt.Println("Max idle connections:", db.Stats().Idle)
+
+	var wg sync.WaitGroup
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func(index int) {
+			defer wg.Done()
+			var n int
+			err := db.QueryRow("SELECT 1").Scan(&n)
+			if err != nil {
+				log.Printf("Query error: %v", err)
+			}
+		}(i)
+	}
+	wg.Wait()
+
+	fmt.Println("Open connections:", db.Stats().OpenConnections)
+	fmt.Println("Idle connections:", db.Stats().Idle)
 
 }
